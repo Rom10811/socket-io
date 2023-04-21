@@ -31,6 +31,17 @@ const storeMessage = async(roomName, messageData) => {
     }
 }
 
+//generate list with list of integers
+var list = [];
+for (var i = 0; i < 200; i++) {
+    list.push(-1);
+}
+list[0] = 0;
+list[1] = 0;
+
+
+var grillesRoom = {};
+
 server.listen(port, () => {
     console.log('Server listening at port %d', port);
 });
@@ -63,12 +74,28 @@ io.on('connection', (socket) => {
         });
     });
 
+    socket.on('reload', (data) => {
+        const key = Object.keys(data)[0];
+        if(grillesRoom[key] !== undefined){
+            io.to(key).emit('fromServer',  grillesRoom[key]);
+        }else{
+            grillesRoom[key] = list;
+            io.to(key).emit('fromServer',  grillesRoom[key]);
+        }
+    })
+
+    socket.on('moove', (data) =>{
+    const key = Object.keys(data)[0];
+        grillesRoom[key] = Object.values(data)[0];
+        io.to(key).emit('fromServer', grillesRoom[key]);
+    })
+
     socket.on('join', (roomName) => {
         socket.join(roomName);
         const clientsInRoom = io.sockets.adapter.rooms.get(roomName);
         const numClients = clientsInRoom ? clientsInRoom.size : 0;
         console.log(`There are ${numClients} clients in ${roomName}`);
         console.log('room joined: %s', roomName);
-
+        console.log(grillesRoom[roomName]);
     })
 });
