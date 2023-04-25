@@ -31,6 +31,25 @@ const storeMessage = async(roomName, messageData) => {
     }
 }
 
+// Helper function to get all messages for a room
+const getAllMessagesForRoom = async (roomName) => {
+    try {
+        const messagesRef = db.collection('messages');
+        const snapshot = await messagesRef.where('roomName', '==', roomName).orderBy('timestamp').get();
+
+        const messages = [];
+        snapshot.forEach((doc) => {
+            messages.push(doc.data());
+        });
+
+        console.log(`Retrieved ${messages.length} messages for room ${roomName}`);
+        return messages;
+    } catch (error) {
+        console.error('Error retrieving messages for room:', error);
+        return [];
+    }
+};
+
 //generate list with list of integers
 var list = [];
 for (var i = 0; i < 200; i++) {
@@ -90,12 +109,18 @@ io.on('connection', (socket) => {
         io.to(key).emit('fromServer', grillesRoom[key]);
     })
 
-    socket.on('join', (roomName) => {
+    socket.on('join', async (roomName) => {
         socket.join(roomName);
+
+        // Get all messages for the room
+        const messages = await getAllMessagesForRoom(roomName);
+
+
         const clientsInRoom = io.sockets.adapter.rooms.get(roomName);
         const numClients = clientsInRoom ? clientsInRoom.size : 0;
         console.log(`There are ${numClients} clients in ${roomName}`);
         console.log('room joined: %s', roomName);
         console.log(grillesRoom[roomName]);
+        socket.emit('message', messages);
     })
 });
