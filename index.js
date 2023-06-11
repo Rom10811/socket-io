@@ -49,6 +49,7 @@ const storeAudioMessage = async (roomName, audioData) => {
         const bucket = storage.bucket(bucketName);
         const file = bucket.file(filePath);
 
+
         await file.save(audioData);
         // Make the file public
         await file.makePublic();
@@ -88,6 +89,7 @@ list[1] = 0;
 
 
 var grillesRoom = {};
+var fondRoom = {};
 
 server.listen(port, () => {
     console.log('Server listening at port %d', port);
@@ -142,12 +144,24 @@ io.on('connection', (socket) => {
             grillesRoom[key] = list;
             io.to(key).emit('fromServer', grillesRoom[key]);
         }
+        if (fondRoom[key] !== undefined) {
+            io.to(key).emit('imageFond', fondRoom[key]);
+        } else {
+            fondRoom[key] = "https://firebasestorage.googleapis.com/v0/b/jdr-maker.appspot.com/o/fondmap.jpg?alt=media&token=e5f30606-4dfd-42ce-b234-781dde83560a&_gl=1*15o4lpy*_ga*MTUwMDEwNjU0OC4xNjY2MzU1MjMz*_ga_CW55HF8NVT*MTY4NjQ3NTcyOC42LjEuMTY4NjQ3ODU3My4wLjAuMA..";
+        }
     })
 
     socket.on('moove', (data) => {
         const key = Object.keys(data)[0];
         grillesRoom[key] = Object.values(data)[0];
         io.to(key).emit('fromServer', grillesRoom[key]);
+    })
+
+    socket.on('fond', (data) => {
+        // send the url of the image to the client
+        const key = Object.keys(data)[0];
+        fondRoom[key] = Object.values(data)[0];
+        io.to(key).emit('imageFond', data[key]);
     })
 
     socket.on('join', async (roomName) => {
@@ -163,6 +177,7 @@ io.on('connection', (socket) => {
         console.log(`There are ${numClients} clients in ${roomName}`);
         console.log('room joined: %s', roomName);
         console.log(grillesRoom[roomName]);
+        console.log(fondRoom[roomName]);
         socket.emit('previousMessages', messages);
     })
 });
