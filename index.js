@@ -121,10 +121,6 @@ io.on('connection', (socket) => {
         // Store the audio data in the GCP bucket
         // The audio message is stored in data.message
         try {
-            const filePath = await storeAudioMessage(data.roomName, data.message);
-            // Update the data.message with the audio file path in the bucket
-            data.message = filePath;
-            console.log(`Audio data stored in Firebase bucket: ${filePath}`);
             await storeMessage(data.roomName, data);
         } catch (error) {
             console.error('Error storing audio data in Firebase bucket:', error);
